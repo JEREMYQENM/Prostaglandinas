@@ -55,7 +55,7 @@ table{width:100%;border-collapse:collapse;font-size:.95rem}td,th{padding:.4rem .
    ===================================================================== */
 const CFG = {
   // Pega aquí la URL de la aplicación web de Google Apps Script (ver instrucciones del ranking).
-  RANK_URL: '',
+  RANK_URL: 'https://script.google.com/macros/s/AKfycbw6GC-YCxDRTWFSp4kJsHeEsUfktyhZ5N8Bd69r9A5jjfgrJkvDv8_q4dARi-hSs_F5mQ/exec',
   GAME: 'coxdefense-2026'
 };
 const NAMES = ["Vania Esperanza Acarapi Mamani", "Wilder Julian Ajllahuanca Nacho", "Lizeth Noemi Amaru Orosco", "Jose Fernando Aruquipa Arismendi", "Yessica Dabne Aruquipa Mita", "Beimar Alexander Bueno Sillerico", "Luis Limberth Butron Mamani", "Jesus Condori Yujra", "Gustavo Machaca Choque", "Denilson Machaca Colque", "Karen Erlinda Mamani Coarite", "Eduardo Mamani Jumpiri", "Emiliano Mamani Quelca", "Rosy Mary Mamani Quino", "Andy Mamani Ramirez", "Bladimir Alex Miranda Huaynoca", "Lizeth Wara Puñi Mamani", "Wilmer Quezo Yujra", "Licet Paola Quispe Quino", "Brayan Quispe Quispe", "Elvis Ruddy Saavedra Romero", "Gabriel Alejandro Salas Paredes", "Ever Villca Larico", "Hermogenes Wilfredo Villegas Cussi"];
@@ -237,11 +237,11 @@ function drawHUD(t) {
   // AA
   g.fillStyle = '#ffd166'; g.beginPath(); g.arc(250, 70, 15, 0, 7); g.fill(); text('AA', 250, 71, 11, '#1d0b22'); text(String(Math.floor(ST.aa)), 274, 71, 24, '#ffd166', 'left');
   // integridad
-  g.fillStyle = '#ffffff22'; rr(360, 56, 200, 28, 14); g.fill(); g.fillStyle = ST.hp > 50 ? '#06d6a0' : ST.hp > 25 ? '#ffd166' : '#ef476f'; rr(360, 56, 200 * ST.hp / 100, 28, 14); g.fill(); text(`Mucosa ${Math.ceil(ST.hp)}%`, 460, 71, 16, '#fff');
+  g.fillStyle = '#ffffff22'; rr(350, 56, 180, 28, 14); g.fill(); g.fillStyle = ST.hp > 50 ? '#06d6a0' : ST.hp > 25 ? '#ffd166' : '#ef476f'; rr(350, 56, 180 * ST.hp / 100, 28, 14); g.fill(); text(`Mucosa ${Math.ceil(ST.hp)}%`, 440, 71, 16, '#fff');
   text(`${ST.score} pts`, 700, 30, 22, '#fff7ef', 'right');
   // botones superiores
-  BTN.pause = [600, 54, 48, 36]; BTN.mute = [654, 54, 48, 36];
-  [['pause', ST.paused ? '▶' : 'II'], ['mute', SAVE.mute ? '✕' : '♪']].forEach(([k, s]) => { const [x, y, w, h] = BTN[k]; g.fillStyle = '#ffffff22'; rr(x, y, w, h, 10); g.fill(); text(s, x + w / 2, y + h / 2 + 1, 18); });
+  BTN.home = [540, 54, 54, 36]; BTN.pause = [600, 54, 48, 36]; BTN.mute = [654, 54, 48, 36];
+  [['home', 'Menú'], ['pause', ST.paused ? '▶' : 'II'], ['mute', SAVE.mute ? '✕' : '♪']].forEach(([k, s]) => { const [x, y, w, h] = BTN[k]; g.fillStyle = '#ffffff22'; rr(x, y, w, h, 10); g.fill(); text(s, x + w / 2, y + h / 2 + 1, k === 'home' ? 14 : 18); });
   // tienda inferior
   const avail = L.towers; BTN.shop = [];
   avail.forEach((k, i) => { const T = TOWERS[k], x = 16 + i * 118, y = FIELD_BOT + 14, w = 110, h = 112, can = ST.aa >= T.cost, on = sel === k;
@@ -366,6 +366,7 @@ function showBox(h) { box.innerHTML = h; ov.classList.add('on'); box.scrollTop =
 function hideBox() { ov.classList.remove('on'); }
 function drawIcon(k) { const c = document.createElement('canvas'); c.width = 140; c.height = 120; const old = g; G(c.getContext('2d')); const t = performance.now() / 1000; if (TOWERS[k]) drawTower({ k, x: 70, y: 62, lvl: 1, block: 0, look: 0 }, t); else drawEnemy({ k, x: 70, y: 66, hp: 1, max: 1, a: 0, id: 1, slowT: 0, icon: true }, t); G(old); return `<img alt="" width="110" height="94" src="${c.toDataURL()}">`; }
 function G(ctx) { g = ctx; }
+function askMenu() { if (!ST || ST.over) return; ST.paused = true; popup = null; showBox(`<h2>¿Volver al menú principal?</h2><p>Tus <b>estrellas, puntajes y niveles desbloqueados</b> ya están guardados. Lo que avanzaste en este nivel (oleada y defensores) se perdería y tendrías que empezarlo de nuevo.</p><div class="row"><button class="btn" data-a="resume">Seguir jugando</button><button class="btn alt" data-a="menu">Salir al menú</button></div>`); }
 function menu() {
   SCREEN = 'menu'; ST = null; const tot = SAVE.best.reduce((a, b) => a + b, 0);
   showBox(`${LOGO ? `<img class="logo" alt="" src="${LOGO}">` : ''}<h1>COX-Defense</h1><p><b>Defiende la mucosa del estómago</b> con las prostaglandinas. Cada nivel corresponde a un tema de la Ruta del conocimiento.</p>
@@ -416,6 +417,7 @@ box.addEventListener('change', e => { if (e.target.id === 'who') { SAVE.name = e
 const inR = (p, r) => r && p[0] >= r[0] && p[0] <= r[0] + r[2] && p[1] >= r[1] && p[1] <= r[1] + r[3];
 cv.addEventListener('pointerdown', e => {
   SND.init(); if (!ST || ov.classList.contains('on')) return; const r = cv.getBoundingClientRect(), p = [(e.clientX - r.left) / SC, (e.clientY - r.top) / SC];
+  if (inR(p, BTN.home)) { askMenu(); return; }
   if (inR(p, BTN.pause)) { ST.paused = !ST.paused; return; }
   if (inR(p, BTN.mute)) { SND.setMute(!SAVE.mute); SND.music(!SAVE.mute && SAVE.music); return; }
   if (ST.paused || ST.over) return;
@@ -426,7 +428,7 @@ cv.addEventListener('pointerdown', e => {
   const pi = PADS.findIndex((q, i) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 40 && !ST.towers.some(x => x.pad === i));
   if (pi >= 0) { if (sel && ST.aa >= TOWERS[sel].cost) { const T = TOWERS[sel], q = PADS[pi]; ST.aa -= T.cost; ST.towers.push({ k: sel, pad: pi, x: q[0], y: q[1], lvl: 1, cd: 0, block: 0, look: 0 }); SND.build(); burst(q[0], q[1], T.col, 14); if (ST.aa < T.cost) sel = null; } else buildMenu(pi); }
 });
-addEventListener('keydown', e => { if (e.key === ' ' && ST && !ov.classList.contains('on')) { e.preventDefault(); if (!ST.running) startWave(); } if (e.key === 'p' && ST) ST.paused = !ST.paused; });
+addEventListener('keydown', e => { if (e.key === ' ' && ST && !ov.classList.contains('on')) { e.preventDefault(); if (!ST.running) startWave(); } if (e.key === 'p' && ST) ST.paused = !ST.paused; if (e.key === 'Escape' && ST && !ST.over) { if (ov.classList.contains('on')) { hideBox(); popup = null; ST.paused = false; } else askMenu(); } });
 document.addEventListener('visibilitychange', () => { if (document.hidden && ST && !ST.over) { ST.paused = true; } });
 
 /* ---------------- bucle principal ---------------- */
